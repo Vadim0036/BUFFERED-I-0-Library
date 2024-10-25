@@ -14,8 +14,8 @@
 typedef struct
 {
 
-    char *writing[BUFFER_SIZE];  /* writing buffer */
-    char *reading[BUFFER_SIZE];  /* reading buffer */
+    char *writing;  /* writing buffer */
+    char *reading;  /* reading buffer */
     int fd;                      /* file's descriptor */
     int offset;                  /* file's offset */
     int flag;                    /* file mode */
@@ -54,6 +54,9 @@ Opens file with one of the following flags:
 My_File *open_file(const char *path, int flags);
 
 int close_file(My_File *f);
+
+
+static int init_buffer(My_File *file, size_t size);
 
 
 static char *init_read_buffer(My_File *file, size_t size);
