@@ -17,32 +17,23 @@ My_File *open_file(const char *path, int flag)
         fd = open(path, O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
         if(fd == -1)
         {
-            perror("Error occured reading file: ");
+            perror("Error occured reading file");
             return NULL;
         }
-        file = malloc(sizeof(My_File));   /*add malloc check*/
-        file->fd = fd; 
-        file->flag = flag;
-        file->offset = lseek(fd, 0, SEEK_CUR);
         printf("File has been opened successfully in READ MODE\n");
-        return file;
     }
     else if(flag == W)
     {
         if(access(path, F_OK) == 0)
         {
+            /* when file already exists */
             fd = open(path, O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
             if(fd == -1)
             {
                 perror("Error opening file");
                 return NULL;
             }
-            file = malloc(sizeof(My_File));   /*add malloc check*/
-            file->fd = fd; 
-            file->flag = flag;
-            file->offset = lseek(fd, 0, SEEK_CUR);
             printf("File has been opened successfully in WRITING MODE\n");
-            return file; 
         }
         else
         {
@@ -53,30 +44,21 @@ My_File *open_file(const char *path, int flag)
                 perror("Error opening file");
                 return NULL;
             }
-            file = malloc(sizeof(My_File));   /*add malloc check*/
-            file->fd = fd; 
-            file->flag = flag;
-            file->offset = lseek(fd, 0, SEEK_CUR);
             printf("File has been created and opened successfully in WRITING MODE\n");
-            return file;
         }
     }
     else if(flag == A)
     {
         if(access(path, F_OK) == 0)
         {
+            /* when file already exists */
             fd = open(path, O_RDWR | O_APPEND, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
             if(fd == -1)
             {
                 perror("Error opening file");
                 return NULL;
             }
-            file = malloc(sizeof(My_File));   /*add malloc check*/
-            file->fd = fd; 
-            file->flag = flag;
-            file->offset = lseek(fd, 0, SEEK_CUR);
-            printf("File has been opened successfully in APPEND MODE\n");
-            return file; 
+            printf("File has been opened successfully in APPEND MODE\n");  
         }
         else
         {
@@ -87,12 +69,7 @@ My_File *open_file(const char *path, int flag)
                 perror("Error opening file");
                 return NULL;
             }
-            file = malloc(sizeof(My_File));   /*add malloc check*/
-            file->fd = fd; 
-            file->flag = flag;
-            file->offset = lseek(fd, 0, SEEK_CUR);
             printf("File has been created and opened successfully in APPEND MODE\n");
-            return file;
         }
     }
     else 
@@ -102,45 +79,75 @@ My_File *open_file(const char *path, int flag)
         errno = 0;
         return NULL;
     }
+
+    /* Create file structure  */
+    file = malloc(sizeof(My_File));
+    if(!file)
+    {
+        close(fd);
+        perror("Memory allocation failed");
+        return NULL;
+    }
+    file->fd = fd; 
+    file->flag = flag;
+    file->offset = lseek(fd, 0, SEEK_CUR);
+    if(file->offset == -1)
+    {
+        perror("Error seeking file");
+        close(fd);
+        free(file);
+        return NULL;
+    }
+
+    init_buffer(file, BUFFER_SIZE);
+
+    return file;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 int close_file(My_File *f)
 {
+    int close_status; 
     if(f == NULL)
     {
-        write(STDERR_FILENO, "File object is NULL\n", strlen("File object is NULL\n"));
+        perror("File object is NULL");
         return -1;
     }
-    if(close(f->fd) == -1)
+    close_status = close(f->fd);
+    if(close_status == -1)
     {
-        perror("Error closing file");
+        perror("Error closing file descriptor");
         free(f);
         return -1;
     }
     free(f);
     return 0; 
 }
+
+static int init_buffer(My_File *file, size_t size)
+{
+    if(file->flag == R)
+    {
+        file->reading = malloc(size); /* check malloc error later */
+    }
+    else if(file->flag == W)
+    {
+        file->writing = malloc(size); /* check malloc error later*/
+    }
+    else if(file->flag == A)
+    {
+        file->writing = malloc(size); /*  I will check this error later */
+        file->reading = malloc(size);
+    }
+    else
+    {
+        perror("Error occured while initializing buffer");
+        return -1; 
+    }
+    printf("Buffer Init Successful\n");
+    return 0;
+}
+
+
 
 static char *init_read_buffer(My_File *file, size_t size)
 {
@@ -153,6 +160,8 @@ static char *init_write_buffer(My_File *file, size_t size)
     char *buffer = malloc(size);
     return buffer; 
 }
+
+
 
 static int loadbuffer(My_File *file, int buffer_type)
 {
@@ -213,5 +222,11 @@ int fgetst(My_File *file, char *dest, size_t size)
 
 
 
-// currently working on buffer loading, specifically, bytes read variable to correctly check errors, then i will 
-// need to countinue my fgets function
+/*  
+    Finished File Open and File Close. File Open and Close should now work as intended 
+
+    I should start working on buffers init, load buffers, fgets() functions  
+
+
+    Mistake with init buffer, it is never used. Therefore, loading function, does not load everything properly
+*/
