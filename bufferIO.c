@@ -123,20 +123,24 @@ int close_file(My_File *f)
     return 0; 
 }
 
+
 static int init_buffer(My_File *file, size_t size)
 {
     if(file->flag == R)
     {
-        file->reading = malloc(size); /* check malloc error later */
+        file->reading = malloc(size);   /* check malloc error later */
+        load_reading_buffer(file);
     }
     else if(file->flag == W)
     {
-        file->writing = malloc(size); /* check malloc error later*/
+        file->writing = malloc(size); /* check malloc error later */
     }
     else if(file->flag == A)
     {
         file->writing = malloc(size); /*  I will check this error later */
         file->reading = malloc(size);
+
+        load_reading_buffer(file);
     }
     else
     {
@@ -148,85 +152,50 @@ static int init_buffer(My_File *file, size_t size)
 }
 
 
-
-static char *init_read_buffer(My_File *file, size_t size)
+static int load_reading_buffer(My_File *file)
 {
-    char *buffer = malloc(size);
-    return buffer;
+    int bytes = read(file->fd, file->reading, BUFFER_SIZE-1);
+
+    if(bytes == -1)
+    {
+        perror("Error with reading file (lrb)");
+        return -1; 
+    }
+
+    file->reading[bytes] = '\0';
+    
+    printf("loaded reading buffer\n");
+    return 0;
 }
 
-static char *init_write_buffer(My_File *file, size_t size)
-{
-    char *buffer = malloc(size);
-    return buffer; 
-}
-
-
-
-static int loadbuffer(My_File *file, int buffer_type)
-{
-    size_t bytes_read; 
-
-    if(buffer_type == R)
-    {
-        bytes_read = read(file->fd, file->reading, BUFFER_SIZE);
-        if(bytes_read == -1)
-        {
-            perror(" 2.) Error occurred with loading buffer\n");
-            return -1; 
-        }
-        printf("loadedBufferReading\n");
-    }
-    else if(buffer_type == W)
-    {
-        bytes_read = read(file->fd, file->writing, BUFFER_SIZE);
-        if(bytes_read == -1)
-        {
-            perror("1.) Error occurrd with loading buffer\n");
-            return -1;
-        }
-        printf("loadedBufferWriting\n");
-    }
-    else if(buffer_type == A)
-    {
-        if((bytes_read = read(file->fd, file->reading, BUFFER_SIZE)) == -1)
-        {
-            perror("Error has occurred with loading buffer\n");
-            return -1;
-        }
-        if((bytes_read = read(file->fd, file->writing, BUFFER_SIZE)) == -1)
-        {
-            perror("Error has occurred with loading buffer\n");
-            return -1;
-        }
-        printf("bufferedWritingAndReadingLoaded\n");
-    }
-    else
-    {
-        errno = EINVAL;  /* 22 */
-        perror("Error has occurred in buffer loader");
-        errno = 0;
-        return -1;
-    }
-    return 0; 
-}
 
 int fgetst(My_File *file, char *dest, size_t size)
 {
     if(!file)
     {
+        perror("File does not exist");
         return -1;
     }
-    loadbuffer(file, file->flag);
+    unsigned spot = 0; 
+    char current_char = file->reading[spot];   
+    while(current_char != '\0' && current_char != '\n' && spot < size-1)
+    {
+        dest[spot] = current_char; 
+        spot++;
+        current_char = file->reading[spot];
+    }    
+    dest[spot] = '\0';
+
+    return 0;
 }
 
 
+/*
 
-/*  
-    Finished File Open and File Close. File Open and Close should now work as intended 
+    I finished buffer init and load reading buffer
 
-    I should start working on buffers init, load buffers, fgets() functions  
+    I also started working on fgetst function, I need to account reading buffer offset,
+    what happens when buffer reaches the end. 
 
 
-    Mistake with init buffer, it is never used. Therefore, loading function, does not load everything properly
 */
