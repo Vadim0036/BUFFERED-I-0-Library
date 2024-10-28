@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#define BUFFER_SIZE 4096    /* defines buffer size */ 
+#define BUFFER_SIZE 50 /* defines buffer size  4096 Bytes 4 KB */ 
 
 #define R O_RDONLY
 #define W O_WRONLY
@@ -65,6 +65,7 @@ static int init_buffer(My_File *file, size_t size);
 static int destruct_buffer(); 
 
 
+static int reset_buffer(My_File *file);
 
 
 static int load_reading_buffer(My_File *file);
