@@ -79,7 +79,6 @@ My_File *open_file(const char *path, int flag)
         errno = 0;
         return NULL;
     }
-
     /* Create file structure  */
     file = malloc(sizeof(My_File));
     if(!file)
@@ -98,9 +97,7 @@ My_File *open_file(const char *path, int flag)
         free(file);
         return NULL;
     }
-
     init_buffer(file, BUFFER_SIZE);
-
     return file;
 }
 
@@ -125,7 +122,6 @@ int close_file(My_File *f)
 
     return 0; 
 }
-
 
 static int init_buffer(My_File *file, size_t size)
 {
@@ -156,7 +152,6 @@ static int init_buffer(My_File *file, size_t size)
     return 0;
 }
 
-
 static int load_reading_buffer(My_File *file)
 {
     int bytes = read(file->fd, file->reading, BUFFER_SIZE-1);
@@ -172,7 +167,7 @@ static int load_reading_buffer(My_File *file)
     for(int i = 0; i < BUFFER_SIZE; i++)
     {
         c = file->reading[i];
-        printf("%d\n", c);
+        printf("%d\, current_charn;", c);
     }
     */
 
@@ -180,59 +175,71 @@ static int load_reading_buffer(My_File *file)
     return 0;
 }
 
-int fgetst(My_File *file, char *dest, size_t length) {
-    
+int fgetst(My_File *file, char *dest, size_t length) 
+{
+    if(!file)
+    {
+        perror("Error opening file\n");
+        return -1;
+    }
+    if(file->flag == W)
+    {
+        perror("This file is opened in WRITE ONLY Mode\n");
+        return -2;
+    }
     unsigned int line_offset = 0; 
-    char current_char; 
-    for (line_offset = 0; line_offset < length - 1; line_offset++) {
-        current_char = file->reading[file->reading_buffer_offset];
+    char current_char = file->reading[file->reading_buffer_offset]; 
 
-        // Check for end of string
-        if (current_char == '\0') {
-            dest[line_offset] = '\0';
-            return 1;
+    /* Check null terminator character */
+    if(current_char == '\0')
+    {
+        return 1; // end of buffer has been reached 
+    }
+    for (line_offset = 0; line_offset < length - 1; line_offset++) 
+    {
+        if(file->reading_buffer_offset >= BUFFER_SIZE-1) //2
+        {
+            printf("I am here!\n");
         }
-        
+        current_char = file->reading[file->reading_buffer_offset];
+        //printf("%d\n", current_char);
+        // Check for end of string
+        if (current_char == '\0') 
+        {
+            dest[line_offset] = '\0';
+            return 0;
+        }
         // Check for newline
-        if (current_char == '\n') {
+        if (current_char == '\n') 
+        {
             dest[line_offset] = current_char;
             file->reading_buffer_offset++; // Increment before returning
             dest[line_offset + 1] = '\0'; // Add null terminator
             return 0; // Newline detected
         }
-        
         dest[line_offset] = current_char; // Copy current char to destination
         file->reading_buffer_offset++; // Increment buffer offset
     }
-
     dest[line_offset] = '\0'; // Null terminate the string
     return 0; // End of buffer reached
 }
 
 
-
-
-
-
 static int reset_buffer(My_File *file)
 {
     memset(file->reading, 0, BUFFER_SIZE);
-
     /* error handling later */
-
     return 0; 
 }
 
 
 /*
-    new line charcter triggers loop to exit, without loading new buffer
+    
+    work on buffer reloading
 
+    when buffer_offset >= BUFFERSIZE-1, it encounters null terminator
+    I need to account it by manipulating buffer_offset value.
 
-    when fgetst func is called again, its current char is '\0' and funt returns 1 exiting funciton forever. 
-
-    think of using while loop, and if statements inside to fix this issue
-
-
-    !!! LOOSING first Letter !!!
+    Issue when buffer size of the string in main is smaller or equal to the buffer size 
 
 */
