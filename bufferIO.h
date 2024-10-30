@@ -5,7 +5,7 @@
 #include <fcntl.h>
 
 
-#define BUFFER_SIZE 3/* defines buffer size  4096 Bytes 4 KB */ 
+#define BUFFER_SIZE 1000/* defines buffer size  4096 Bytes 4 KB */ 
 
 #define R O_RDONLY
 #define W O_WRONLY
@@ -19,6 +19,7 @@ typedef struct
 
     char *writing;  /* writing buffer */
     unsigned int writing_buffer_offset;
+
     char *reading;  /* reading buffer */
     unsigned int reading_buffer_offset;
 
