@@ -195,11 +195,21 @@ int fgetst(My_File *file, char *dest, size_t length)
     {
         return 1; // end of buffer has been reached 
     }
-    for (line_offset = 0; line_offset < length - 1; line_offset++) 
+    for (line_offset = 0; line_offset < length; line_offset++) 
     {
         if(file->reading_buffer_offset >= BUFFER_SIZE-1) //2
+        {   
+                reset_buffer(file);
+                load_reading_buffer(file);
+                file->reading_buffer_offset = 0;
+                return 0;
+                printf("I am there\n");
+        }
+        if(line_offset >= length -1)
         {
-            printf("I am here!\n");
+            printf("I am here\n");
+            // it will be after buffer checker 
+            // and if buffer is not excceded and line_offset reaches its end, it will return 
         }
         current_char = file->reading[file->reading_buffer_offset];
         //printf("%d\n", current_char);
@@ -242,4 +252,8 @@ static int reset_buffer(My_File *file)
 
     Issue when buffer size of the string in main is smaller or equal to the buffer size 
 
+
+    I need to redesign the loop and count buffer_offset and not line_offset
+    
 */
+
