@@ -119,7 +119,6 @@ int close_file(My_File *f)
     free(f);
 
     /* Free all buffers */
-
     return 0; 
 }
 
@@ -175,6 +174,7 @@ static int load_reading_buffer(My_File *file)
     return 0;
 }
 
+/*
 int fgetst(My_File *file, char *dest, size_t length) 
 {
     if(!file)
@@ -190,7 +190,7 @@ int fgetst(My_File *file, char *dest, size_t length)
     unsigned int line_offset = 0; 
     char current_char = file->reading[file->reading_buffer_offset]; 
 
-    /* Check null terminator character */
+    /* Check null terminator character 
     if(current_char == '\0')
     {
         return 1; // end of buffer has been reached 
@@ -233,12 +233,77 @@ int fgetst(My_File *file, char *dest, size_t length)
     dest[line_offset] = '\0'; // Null terminate the string
     return 0; // End of buffer reached
 }
+*/
+
+int fgetst(My_File *file, char *dest, size_t length)
+{
+    if(!file)
+    {
+        perror("Error opening file\n");
+        return -1;
+    }
+    if(file->flag == W)
+    {
+        perror("This file is opened in WRITE ONLY Mode\n");
+        return -2;
+    }
+    unsigned int line_offset = 0; 
+    char current_char = file->reading[file->reading_buffer_offset];
+    if(current_char == '\0')
+    {
+        return 1;
+    }
+    //printf("I am here");
+    for(file->reading_buffer_offset; file->reading_buffer_offset < BUFFER_SIZE-1; file->reading_buffer_offset++)
+    {   
+        current_char = file->reading[file->reading_buffer_offset]; 
+        //printf("%c\n", current_char);
+        if(current_char == '\n')
+        {
+            dest[line_offset] = '\n';
+            file->reading_buffer_offset++;
+            return 0;
+        }
+        if (current_char == '\0')
+        {
+            dest[line_offset] = '\0';
+            return 0;
+        }
+        dest[line_offset] = current_char;
+        line_offset++;
+    }
+    return 0;
+}
 
 
 static int reset_buffer(My_File *file)
 {
     memset(file->reading, 0, BUFFER_SIZE);
     /* error handling later */
+    return 0; 
+}
+
+
+/*
+    
+    work on buffer reloading
+
+    when buffer_offset >= BUFFERSIZE-1Increment before returning
+            dest[line_offset + 1] = '\0'; // Add null terminator
+            return 0; // Newline detected
+        }
+        dest[line_offset] = current_char; // Copy current char to destination
+        file->reading_buffer_offset++; // Increment buffer offset
+    }
+    dest[line_offset] = '\0'; // Null terminate the string
+    return 0; // End of buffer reached
+}
+
+
+static int reset_buffer(My_File *file)
+{
+    memset(file->reading, 0, BUFFER_SIZE);
+    // error handling later 
     return 0; 
 }
 
@@ -257,3 +322,9 @@ static int reset_buffer(My_File *file)
     
 */
 
+
+/*
+
+    ask question about appliations of certain thing in IT
+
+*/
