@@ -162,19 +162,11 @@ static int load_reading_buffer(My_File *file)
     }
     char c;
 
-    /*
-    for(int i = 0; i < BUFFER_SIZE; i++)
-    {
-        c = file->reading[i];
-        printf("%c\n", c);
-    }
-    */
-
     file->reading[bytes] = '\0';
     return 0;
 }
 
-
+/* Optimize this function later*/
 int fgetst(My_File *file, char *dest, size_t length)
 {
     if(!file)
@@ -193,7 +185,7 @@ int fgetst(My_File *file, char *dest, size_t length)
     {
         if(file->reading_buffer_offset >= BUFFER_SIZE-1)
         {
-            reset_buffer(file);
+            memset(file->reading, 0, BUFFER_SIZE);
             load_reading_buffer(file);
             file->reading_buffer_offset = 0;
         }
@@ -203,7 +195,7 @@ int fgetst(My_File *file, char *dest, size_t length)
     {   
         if(file->reading_buffer_offset >= BUFFER_SIZE-1)
         {
-            reset_buffer(file);
+            memset(file->reading, 0, BUFFER_SIZE);
             load_reading_buffer(file);
             file->reading_buffer_offset = -1;
             //printf("___%c____\n", file->reading[0]);
@@ -237,9 +229,29 @@ int fgetst(My_File *file, char *dest, size_t length)
 }
 
 
-static int reset_buffer(My_File *file)
+int fgetch(My_File *file)
 {
-    memset(file->reading, 0, BUFFER_SIZE);
-    /* error handling later */
-    return 0; 
+    //printf("I am here!\n");
+    if(!file)
+    {
+        perror("File couldn't be opened.");
+        return EOF;
+    }
+    else if(file->flag == W)
+    {
+        perror("File is opened in WRITING ONLY Mode");
+        return EOF;
+    }
+    if (file->reading_buffer_offset >= BUFFER_SIZE-1)
+    {
+        memset(file->reading, 0, BUFFER_SIZE); 
+        load_reading_buffer(file);
+        file->reading_buffer_offset = 0;
+        if(file->reading[0] == '\0') { return EOF; }
+    }
+    int current_char; 
+    current_char = file->reading[file->reading_buffer_offset]; 
+    if(current_char == '\0'){ return EOF; }
+    file->reading_buffer_offset++;
+    return current_char;
 }
