@@ -5,7 +5,7 @@
 #include <fcntl.h>
 
 
-#define BUFFER_SIZE 3 /* defines buffer size  4096 Bytes 4 KB */ 
+#define BUFFER_SIZE 4096 /* defines buffer size  4096 Bytes 4 KB */ 
 
 #define R O_RDONLY
 #define W O_WRONLY
@@ -63,14 +63,8 @@ Opens file with one of the following flags:
 My_File *open_file(const char *path, int flags);
 
 int close_file(My_File *f);
-
 static int init_buffer(My_File *file, size_t size);
-
 static int destruct_buffer(); 
-
-
-static int reset_buffer(My_File *file);
-
 
 static int load_reading_buffer(My_File *file);
 
@@ -78,15 +72,13 @@ static int flush_writing_buffer(My_File *file);
 
 
 
-
-int read_file();
-int write_file();
-
-int fgetch();
+int fgetch(My_File *file);
 int fgetst(My_File *file, char *dest, size_t size);
 
-int fputca();
+int fputch();
 int fputst();
+
+/* fscanf function */ 
 
 
 #endif
