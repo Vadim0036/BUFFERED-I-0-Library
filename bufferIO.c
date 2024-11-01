@@ -119,7 +119,6 @@ int close_file(My_File *f)
     free(f);
 
     /* Free all buffers */
-
     return 0; 
 }
 
@@ -167,7 +166,7 @@ static int load_reading_buffer(My_File *file)
     for(int i = 0; i < BUFFER_SIZE; i++)
     {
         c = file->reading[i];
-        printf("%d\, current_charn;", c);
+        printf("%c\n", c);
     }
     */
 
@@ -175,7 +174,8 @@ static int load_reading_buffer(My_File *file)
     return 0;
 }
 
-int fgetst(My_File *file, char *dest, size_t length) 
+
+int fgetst(My_File *file, char *dest, size_t length)
 {
     if(!file)
     {
@@ -188,50 +188,52 @@ int fgetst(My_File *file, char *dest, size_t length)
         return -2;
     }
     unsigned int line_offset = 0; 
-    char current_char = file->reading[file->reading_buffer_offset]; 
-
-    /* Check null terminator character */
+    char current_char = file->reading[file->reading_buffer_offset];
     if(current_char == '\0')
     {
-        return 1; // end of buffer has been reached 
-    }
-    for (line_offset = 0; line_offset < length; line_offset++) 
-    {
-        if(file->reading_buffer_offset >= BUFFER_SIZE-1) //2
-        {   
-                reset_buffer(file);
-                load_reading_buffer(file);
-                file->reading_buffer_offset = 0;
-                return 0;
-                printf("I am there\n");
-        }
-        if(line_offset >= length -1)
+        if(file->reading_buffer_offset >= BUFFER_SIZE-1)
         {
-            printf("I am here\n");
-            // it will be after buffer checker 
-            // and if buffer is not excceded and line_offset reaches its end, it will return 
+            reset_buffer(file);
+            load_reading_buffer(file);
+            file->reading_buffer_offset = 0;
         }
-        current_char = file->reading[file->reading_buffer_offset];
-        //printf("%d\n", current_char);
-        // Check for end of string
-        if (current_char == '\0') 
+        else { return 1; }
+    }
+    for(; file->reading_buffer_offset < BUFFER_SIZE; file->reading_buffer_offset++)
+    {   
+        if(file->reading_buffer_offset >= BUFFER_SIZE-1)
+        {
+            reset_buffer(file);
+            load_reading_buffer(file);
+            file->reading_buffer_offset = -1;
+            //printf("___%c____\n", file->reading[0]);
+            continue;
+        }
+        if(line_offset >= length-1)
+        {
+            dest[line_offset] = '\0';
+            return 0; 
+        }  
+        current_char = file->reading[file->reading_buffer_offset]; 
+        //printf("Ascii: %d buffer_offset: %d line_offset: %d\n", current_char, file->reading_buffer_offset, line_offset);
+
+        if(current_char == '\n')
+        {
+            dest[line_offset] = '\n';
+            dest[line_offset+1] = '\0'; 
+            file->reading_buffer_offset++;
+            return 0;
+        }
+        if (current_char == '\0')
         {
             dest[line_offset] = '\0';
             return 0;
         }
-        // Check for newline
-        if (current_char == '\n') 
-        {
-            dest[line_offset] = current_char;
-            file->reading_buffer_offset++; // Increment before returning
-            dest[line_offset + 1] = '\0'; // Add null terminator
-            return 0; // Newline detected
-        }
-        dest[line_offset] = current_char; // Copy current char to destination
-        file->reading_buffer_offset++; // Increment buffer offset
+        dest[line_offset] = current_char;
+        line_offset++;
     }
-    dest[line_offset] = '\0'; // Null terminate the string
-    return 0; // End of buffer reached
+    dest[line_offset] = '\0';
+    return 0;
 }
 
 
@@ -241,19 +243,3 @@ static int reset_buffer(My_File *file)
     /* error handling later */
     return 0; 
 }
-
-
-/*
-    
-    work on buffer reloading
-
-    when buffer_offset >= BUFFERSIZE-1, it encounters null terminator
-    I need to account it by manipulating buffer_offset value.
-
-    Issue when buffer size of the string in main is smaller or equal to the buffer size 
-
-
-    I need to redesign the loop and count buffer_offset and not line_offset
-    
-*/
-
