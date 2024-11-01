@@ -79,7 +79,6 @@ My_File *open_file(const char *path, int flag)
         errno = 0;
         return NULL;
     }
-
     /* Create file structure  */
     file = malloc(sizeof(My_File));
     if(!file)
@@ -98,9 +97,7 @@ My_File *open_file(const char *path, int flag)
         free(file);
         return NULL;
     }
-
     init_buffer(file, BUFFER_SIZE);
-
     return file;
 }
 
@@ -120,9 +117,10 @@ int close_file(My_File *f)
         return -1;
     }
     free(f);
+
+    /* Free all buffers */
     return 0; 
 }
-
 
 static int init_buffer(My_File *file, size_t size)
 {
@@ -153,7 +151,6 @@ static int init_buffer(My_File *file, size_t size)
     return 0;
 }
 
-
 static int load_reading_buffer(My_File *file)
 {
     int bytes = read(file->fd, file->reading, BUFFER_SIZE-1);
@@ -169,7 +166,7 @@ static int load_reading_buffer(My_File *file)
     for(int i = 0; i < BUFFER_SIZE; i++)
     {
         c = file->reading[i];
-        printf("%d\n", c);
+        printf("%c\n", c);
     }
     */
 
@@ -177,116 +174,72 @@ static int load_reading_buffer(My_File *file)
     return 0;
 }
 
-/*
-int fgetst(My_File *file, char *dest, size_t size)
+
+int fgetst(My_File *file, char *dest, size_t length)
 {
     if(!file)
     {
-        perror("Error opening file: file does not exist");
+        perror("Error opening file\n");
         return -1;
     }
-    else if(file->flag == W)
+    if(file->flag == W)
     {
-        perror("You dont have permission to read 'write mode' file");
-        return -2; 
+        perror("This file is opened in WRITE ONLY Mode\n");
+        return -2;
     }
-    char current_char; 
-    if((current_char = file->reading[file->reading_buffer_offset]) == '\0')
+    unsigned int line_offset = 0; 
+    char current_char = file->reading[file->reading_buffer_offset];
+    if(current_char == '\0')
     {
-        return 1; 
-    }
-    unsigned int current_line_char_number = 0; 
-    current_char = file->reading[file->reading_buffer_offset]; 
-    while(current_char != '\0' && current_char != '\n' && current_line_char_number < size-1)
-    {
-        dest[current_line_char_number] = current_char;
-        file->reading_buffer_offset++; 
-        current_line_char_number++;
         if(file->reading_buffer_offset >= BUFFER_SIZE-1)
         {
             reset_buffer(file);
-            load_reading_buffer(file);  /* Error handling malloc later 
+            load_reading_buffer(file);
             file->reading_buffer_offset = 0;
         }
-        current_char = file->reading[file->reading_buffer_offset];
+        else { return 1; }
     }
-    if(current_line_char_number == size-1)
-    {
-        return 0;
-    }
-    file->reading_buffer_offset++;
-    dest[current_line_char_number] = '\0';
-    return 0;
-}
-
-*/
-
-int fgetst(My_File *file, char *dest, size_t size)
-{
-    if(!file)
-    {
-        perror("Error opening file: file does not exist");
-        return -1;
-    }
-    else if(file->flag == W)
-    {
-        perror("You dont have permission to read 'write mode' file");
-        return -2; 
-    }
-    char current_char; 
-    if((current_char = file->reading[file->reading_buffer_offset]) == '\0')
-    {
-        return 1; 
-    }
-    unsigned int current_line_char_number = 0; 
-    current_char = file->reading[file->reading_buffer_offset]; 
-
-
-    for(current_line_char_number = 0; current_line_char_number < size-1; current_line_char_number++)
+    for(; file->reading_buffer_offset < BUFFER_SIZE; file->reading_buffer_offset++)
     {   
-        dest[current_line_char_number] = current_char;
-        file->reading_buffer_offset++;     
         if(file->reading_buffer_offset >= BUFFER_SIZE-1)
         {
             reset_buffer(file);
-            load_reading_buffer(file); /* Will handle error later */
-            file->reading_buffer_offset = 0;
+            load_reading_buffer(file);
+            file->reading_buffer_offset = -1;
+            //printf("___%c____\n", file->reading[0]);
+            continue;
         }
-        if(current_char == '\0') { break; }
-        if(current_char == '\n') { break; }
+        if(line_offset >= length-1)
+        {
+            dest[line_offset] = '\0';
+            return 0; 
+        }  
+        current_char = file->reading[file->reading_buffer_offset]; 
+        //printf("Ascii: %d buffer_offset: %d line_offset: %d\n", current_char, file->reading_buffer_offset, line_offset);
 
-        current_char = file->reading[file->reading_buffer_offset];
+        if(current_char == '\n')
+        {
+            dest[line_offset] = '\n';
+            dest[line_offset+1] = '\0'; 
+            file->reading_buffer_offset++;
+            return 0;
+        }
+        if (current_char == '\0')
+        {
+            dest[line_offset] = '\0';
+            return 0;
+        }
+        dest[line_offset] = current_char;
+        line_offset++;
     }
-
-    if(current_line_char_number == size-1)
-    {
-        return 0;
-    }
-    file->reading_buffer_offset++;
-    dest[current_line_char_number] = '\0';
+    dest[line_offset] = '\0';
     return 0;
 }
-
-
-
 
 
 static int reset_buffer(My_File *file)
 {
     memset(file->reading, 0, BUFFER_SIZE);
+    /* error handling later */
+    return 0; 
 }
-
-
-/*
-    new line charcter triggers loop to exit, without loading new buffer
-
-
-    when fgetst func is called again, its current char is '\0' and funt returns 1 exiting funciton forever. 
-
-    think of using while loop, and if statements inside to fix this issue
-
-
-    !!! LOOSING first Letter !!!
-
-*/
-
