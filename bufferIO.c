@@ -287,9 +287,10 @@ int fputst(My_File *file, const char *data, size_t size)
         return -2;
     }
     int total_chars_written = 0;
-    int remaining_space = BUFFER_SIZE - file->writing_buffer_offset -1; 
+    int remaining_space = BUFFER_SIZE - file->writing_buffer_offset; 
     if(size <= remaining_space)
     {
+       
         for(int i = 0; i < size; i++)
         {
             file->writing[file->writing_buffer_offset] = data[i];
@@ -301,6 +302,7 @@ int fputst(My_File *file, const char *data, size_t size)
     {
         if(size < BUFFER_SIZE)
         {
+            printf("I am in size < buffer_size\n");
             flush_writing_buffer(file);
             memset(file->writing, 0, BUFFER_SIZE);
             for(int i = 0; i < size; i++)
@@ -312,11 +314,11 @@ int fputst(My_File *file, const char *data, size_t size)
         }
         else
         {
-            printf("I am here!");
+            printf("I am in else; partially data write\n");
             // write data partially
             for(int i = 0; i < size; i++)
             {
-                if(file->writing_buffer_offset >= BUFFER_SIZE-1)
+                if(file->writing_buffer_offset >= BUFFER_SIZE)
                 {
                     flush_writing_buffer(file);
                     memset(file->writing, 0, BUFFER_SIZE);
@@ -327,10 +329,34 @@ int fputst(My_File *file, const char *data, size_t size)
             }
         }
     }
-    if(file->writing_buffer_offset >= BUFFER_SIZE-1)
+    if(file->writing_buffer_offset >= BUFFER_SIZE)
     {
         flush_writing_buffer(file);
         memset(file->writing, 0, BUFFER_SIZE);
     }
     return total_chars_written;
+}
+
+int fputch(My_File *file, int c)
+{
+    if(!file)
+    {
+        perror("File could not be opened");
+        return -1;
+    }
+    if(file->flag == R)
+    {
+        perror("File was opened in READ ONLY mode.");
+        return -2;
+    }
+    int remaining_space = BUFFER_SIZE - file->writing_buffer_offset; 
+    if(remaining_space <= 0)
+    {
+        printf("hi\n");
+        flush_writing_buffer(file);
+        memset(file->writing, 0, BUFFER_SIZE);
+    }
+    file->writing[file->writing_buffer_offset] = c;
+    file->writing_buffer_offset++;
+    return 0;
 }
