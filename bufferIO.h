@@ -26,7 +26,6 @@ typedef struct
     int fd;                      /* file's descriptor */
     int offset;                  /* file's offset */
     int flag;                    /* file mode */
-    size_t size;                 /* file size*/
 
 } My_File;
 
@@ -64,7 +63,7 @@ My_File *open_file(const char *path, int flags);
 
 int close_file(My_File *f);
 static int init_buffer(My_File *file, size_t size);
-static int destruct_buffer(); 
+static int destruct_buffers(); 
 
 static int load_reading_buffer(My_File *file);
 
@@ -76,9 +75,11 @@ int fgetch(My_File *file);
 int fgetst(My_File *file, char *dest, size_t size);
 
 int fputch();
-int fputst();
+int fputst(My_File *file, const char *data, size_t size);
 
 /* fscanf function */ 
+
+/* write data that flushes to the disk */
 
 
 #endif
