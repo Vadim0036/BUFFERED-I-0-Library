@@ -74,12 +74,14 @@ static int flush_writing_buffer(My_File *file);
 int fgetch(My_File *file);
 int fgetst(My_File *file, char *dest, size_t size);
 
-int fputch();
+int fputch(My_File *file, int character);
 int fputst(My_File *file, const char *data, size_t size);
 
-/* fscanf function */ 
 
-/* write data that flushes to the disk */
+/* write data that flushes to the disk directly */
 
 
 #endif
+
+/* Work on fputch func */
+/* Test Append+ Mode */
