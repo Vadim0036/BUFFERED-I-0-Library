@@ -109,6 +109,7 @@ int close_file(My_File *f)
         perror("File object is NULL");
         return -1;
     }
+    flush_writing_buffer(f);
     close_status = close(f->fd);
     if(close_status == -1)
     {
@@ -163,6 +164,23 @@ static int load_reading_buffer(My_File *file)
     char c;
 
     file->reading[bytes] = '\0';
+    return 0;
+}
+
+static int flush_writing_buffer(My_File *file)
+{
+    if(!file)
+    {
+        perror("File could not be opened.");
+        return -1; 
+    }
+    int bytes = write(file->fd, file->writing, file->writing_buffer_offset);
+    if(bytes == -1)
+    {
+        perror("Error flushing the writing buffer.");
+        return -2;
+    }
+    file->writing_buffer_offset = 0;
     return 0;
 }
 
@@ -254,4 +272,65 @@ int fgetch(My_File *file)
     if(current_char == '\0'){ return EOF; }
     file->reading_buffer_offset++;
     return current_char;
+}
+
+int fputst(My_File *file, const char *data, size_t size)
+{
+    if(!file)
+    {
+        perror("The given file does not exist.");
+        return -1;
+    }
+    if(file->flag == R)
+    {
+        perror("File is opened in READ ONLY mode.");
+        return -2;
+    }
+    int total_chars_written = 0;
+    int remaining_space = BUFFER_SIZE - file->writing_buffer_offset -1; 
+    if(size <= remaining_space)
+    {
+        for(int i = 0; i < size; i++)
+        {
+            file->writing[file->writing_buffer_offset] = data[i];
+            file->writing_buffer_offset++;
+            total_chars_written++;
+        }
+    }
+    else
+    {
+        if(size < BUFFER_SIZE)
+        {
+            flush_writing_buffer(file);
+            memset(file->writing, 0, BUFFER_SIZE);
+            for(int i = 0; i < size; i++)
+            {
+                file->writing[file->writing_buffer_offset] = data[i];
+                file->writing_buffer_offset++;
+                total_chars_written++;
+            }
+        }
+        else
+        {
+            printf("I am here!");
+            // write data partially
+            for(int i = 0; i < size; i++)
+            {
+                if(file->writing_buffer_offset >= BUFFER_SIZE-1)
+                {
+                    flush_writing_buffer(file);
+                    memset(file->writing, 0, BUFFER_SIZE);
+                }
+                file->writing[file->writing_buffer_offset] = data[i];
+                file->writing_buffer_offset++;
+                total_chars_written++;
+            }
+        }
+    }
+    if(file->writing_buffer_offset >= BUFFER_SIZE-1)
+    {
+        flush_writing_buffer(file);
+        memset(file->writing, 0, BUFFER_SIZE);
+    }
+    return total_chars_written;
 }
