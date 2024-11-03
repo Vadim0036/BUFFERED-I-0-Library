@@ -7,9 +7,9 @@
 
 #define BUFFER_SIZE 4096 /* defines buffer size  4096 Bytes 4 KB */ 
 
-#define R O_RDONLY
+#define R O_RDONLY 
 #define W O_WRONLY
-#define A O_APPEND
+#define A O_APPEND 
 
 
 
@@ -62,14 +62,6 @@ Opens file with one of the following flags:
 My_File *open_file(const char *path, int flags);
 
 int close_file(My_File *f);
-static int init_buffer(My_File *file, size_t size);
-static int destruct_buffers(); 
-
-static int load_reading_buffer(My_File *file);
-
-static int flush_writing_buffer(My_File *file);
-
-
 
 int fgetch(My_File *file);
 int fgetst(My_File *file, char *dest, size_t size);
@@ -78,10 +70,16 @@ int fputch(My_File *file, int character);
 int fputst(My_File *file, const char *data, size_t size);
 
 
-/* write data that flushes to the disk directly */
+static int init_buffer(My_File *file, size_t size);
+
+static int load_reading_buffer(My_File *file);
+
+static int flush_writing_buffer(My_File *file);
+
+
+/* write data that flushes to the disk directly */ 
 
 
 #endif
 
-/* Work on fputch func */
-/* Test Append+ Mode */
+/* Test Append+ Mode did not pass; it requires to load buffer after information was flushed to the buffer */
