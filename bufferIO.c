@@ -117,9 +117,12 @@ int close_file(My_File *f)
         free(f);
         return -1;
     }
-    free(f);
 
     /* Free all buffers */
+    free(f->reading);
+    free(f->writing);
+    free(f);
+    
     return 0; 
 }
 
@@ -197,6 +200,10 @@ int fgetst(My_File *file, char *dest, size_t length)
         perror("This file is opened in WRITE ONLY Mode\n");
         return -2;
     }
+
+    flush_writing_buffer(file);
+    
+
     unsigned int line_offset = 0; 
     char current_char = file->reading[file->reading_buffer_offset];
     if(current_char == '\0')
@@ -297,6 +304,7 @@ int fputst(My_File *file, const char *data, size_t size)
             file->writing_buffer_offset++;
             total_chars_written++;
         }
+        printf("%d\n", file->writing_buffer_offset);
     }
     else
     {
